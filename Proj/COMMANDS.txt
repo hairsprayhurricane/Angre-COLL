@@ -1,0 +1,36 @@
+# PowerShell команды для работы с API
+# База: http://localhost:3069
+
+$base = "http://localhost:3069"
+
+# 1) Получить все задачи
+Invoke-RestMethod -Method GET -Uri "$base/api/tasks" | Format-Table
+
+# 2) Получить задачу по ID (пример: 1)
+$id = 1
+Invoke-RestMethod -Method GET -Uri "$base/api/tasks/$id"
+
+# 3) Создать новую задачу
+$newTask = @{ title = "Купить билеты"; description = "На поезд до СПб" } | ConvertTo-Json
+Invoke-RestMethod -Method POST -Uri "$base/api/tasks" -ContentType 'application/json' -Body $newTask
+
+# 4) Частично обновить задачу (PATCH)
+# Можно обновлять любое из полей: title, description, status
+# Примеры статусов: "In Process", "Completed"
+$update = @{ status = "Completed"; description = "Куплены на 20:30" } | ConvertTo-Json
+$idToUpdate = 1
+Invoke-RestMethod -Method PATCH -Uri "$base/api/tasks/$idToUpdate" -ContentType 'application/json' -Body $update
+
+# 5) Удалить задачу
+$idToDelete = 2
+Invoke-RestMethod -Method DELETE -Uri "$base/api/tasks/$idToDelete"
+
+# Дополнительно: создать несколько задач подряд
+1..3 | ForEach-Object {
+  $payload = @{ title = "Задача $_"; description = "Описание $_" } | ConvertTo-Json
+  Invoke-RestMethod -Method POST -Uri "$base/api/tasks" -ContentType 'application/json' -Body $payload
+}
+
+# Проверка после операций
+Invoke-RestMethod -Method GET -Uri "$base/api/tasks" | Format-Table
+
