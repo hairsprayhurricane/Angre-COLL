@@ -1,13 +1,31 @@
 {
-  "name": "simple-task-server",
+  "name": "task-manager-fullstack",
   "version": "1.0.0",
-  "description": "Simple Express server with SQLite",
-  "main": "server.js",
+  "description": "Full-stack приложение для управления задачами с React frontend и Express backend",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && npm start",
+    "frontend": "cd frontend && npm start",
+    "install-all": "npm run install-backend && npm run install-frontend",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install",
+    "build": "cd frontend && npm run build"
   },
-  "dependencies": {
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6"
+  "keywords": [
+    "react",
+    "express",
+    "sqlite",
+    "task-manager",
+    "fullstack"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
   }
 }
