@@ -1,5 +1,136 @@
 import React, { useState } from 'react';
-import './TaskItem.css';
+import styled from 'styled-components';
+
+// Styled Components
+const TaskItemContainer = styled.div`
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid ${props => 
+    props.$status === 'Completed' ? '#28a745' : 
+    props.$status === 'In Process' ? '#17a2b8' : '#6c757d'};
+`;
+
+const TaskHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+`;
+
+const TaskTitle = styled.h3`
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  text-decoration: ${props => props.$completed ? 'line-through' : 'none'};
+  opacity: ${props => props.$completed ? 0.7 : 1};
+`;
+
+const TaskDescription = styled.p`
+  color: #6c757d;
+  margin: 8px 0 15px;
+  line-height: 1.5;
+`;
+
+const TaskMeta = styled.div`
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+`;
+
+const Button = styled.button`
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const EditButton = styled(Button)`
+  background-color: #ffc107;
+  color: #212529;
+  
+  &:hover:not(:disabled) {
+    background-color: #e0a800;
+  }
+`;
+
+const DeleteButton = styled(Button)`
+  background-color: #dc3545;
+  color: white;
+  
+  &:hover:not(:disabled) {
+    background-color: #c82333;
+  }
+`;
+
+const SaveButton = styled(Button)`
+  background-color: #28a745;
+  color: white;
+  
+  &:hover:not(:disabled) {
+    background-color: #218838;
+  }
+`;
+
+const CancelButton = styled(Button)`
+  background-color: #6c757d;
+  color: white;
+  
+  &:hover:not(:disabled) {
+    background-color: #5a6268;
+  }
+`;
+
+const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: ${props => 
+    props.$status === 'Completed' ? '#d4edda' : 
+    props.$status === 'In Process' ? '#d1ecf1' : '#e2e3e5'};
+  color: ${props => 
+    props.$status === 'Completed' ? '#155724' : 
+    props.$status === 'In Process' ? '#0c5460' : '#383d41'};
+`;
+
+const EditInput = styled.input`
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+`;
+
+const EditTextarea = styled.textarea`
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  min-height: 80px;
+  resize: vertical;
+`;
 
 const TaskItem = ({ task, onUpdateTask, onDeleteTask }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -59,108 +190,102 @@ const TaskItem = ({ task, onUpdateTask, onDeleteTask }) => {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
+    const options = {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    });
+    };
+    return new Date(dateString).toLocaleString('ru-RU', options);
   };
 
   return (
-    <div className={`task-item ${task.status === 'Completed' ? 'completed' : ''}`}>
+    <TaskItemContainer $status={task.status}>
       {isEditing ? (
-        <div className="edit-mode">
-          <div className="edit-form">
-            <input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              className="edit-input"
-              placeholder="Заголовок задачи"
-            />
-            <textarea
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              className="edit-textarea"
-              placeholder="Описание задачи"
-              rows="2"
-            />
-          </div>
-          <div className="edit-actions">
-            <button 
+        <div>
+          <EditInput
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            placeholder="Заголовок задачи"
+          />
+          <EditTextarea
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Описание задачи"
+          />
+          <ButtonGroup>
+            <SaveButton 
               onClick={handleSave} 
               disabled={isUpdating}
-              className="save-button"
             >
               {isUpdating ? 'Сохранение...' : 'Сохранить'}
-            </button>
-            <button 
+            </SaveButton>
+            <CancelButton
               onClick={handleCancel}
               disabled={isUpdating}
-              className="cancel-button"
             >
               Отмена
-            </button>
-          </div>
+            </CancelButton>
+          </ButtonGroup>
         </div>
       ) : (
         <>
-          <div className="task-content">
-            <h3 className="task-title">{task.title}</h3>
-            {task.description && (
-              <p className="task-description">{task.description}</p>
-            )}
-            <div className="task-meta">
-              <span className="task-date">
-                Создано: {formatDate(task.createdAt)}
-              </span>
-              {task.updatedAt && task.updatedAt !== task.createdAt && (
-                <span className="task-date">
-                  Обновлено: {formatDate(task.updatedAt)}
-                </span>
-              )}
-            </div>
-          </div>
+          <TaskHeader>
+            <TaskTitle $completed={task.status === 'Completed'}>
+              {task.title}
+            </TaskTitle>
+            <StatusBadge $status={task.status}>
+              {task.status === 'In Process' ? 'В процессе' : 
+               task.status === 'Completed' ? 'Завершена' : 'Не начата'}
+            </StatusBadge>
+          </TaskHeader>
           
-          <div className="task-actions">
-            <div className="status-section">
-              <label className="status-label">Статус:</label>
+          {task.description && (
+            <TaskDescription>{task.description}</TaskDescription>
+          )}
+          
+          <TaskMeta>
+            <span>Создано: {formatDate(task.createdAt)}</span>
+            <span>
               <select
                 value={task.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 disabled={isUpdating}
-                className="status-select"
+                style={{
+                  padding: '2px 5px',
+                  borderRadius: '4px',
+                  border: '1px solid #ced4da',
+                  fontSize: '0.8rem',
+                  backgroundColor: 'white',
+                  cursor: isUpdating ? 'not-allowed' : 'pointer'
+                }}
               >
+                <option value="Not Started">Не начата</option>
                 <option value="In Process">В процессе</option>
-                <option value="Completed">Завершено</option>
+                <option value="Completed">Завершена</option>
               </select>
-            </div>
-            
-            <div className="action-buttons">
-              <button 
-                onClick={handleEdit}
-                disabled={isUpdating}
-                className="edit-button"
-                title="Редактировать"
-              >
-                ✏️
-              </button>
-              <button 
-                onClick={handleDelete}
-                disabled={isUpdating}
-                className="delete-button"
-                title="Удалить"
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
+            </span>
+          </TaskMeta>
+          
+          <ButtonGroup>
+            <EditButton 
+              onClick={handleEdit}
+              disabled={isUpdating}
+            >
+              Редактировать
+            </EditButton>
+            <DeleteButton 
+              onClick={handleDelete}
+              disabled={isUpdating}
+            >
+              Удалить
+            </DeleteButton>
+          </ButtonGroup>
         </>
       )}
-    </div>
+    </TaskItemContainer>
   );
 };
 

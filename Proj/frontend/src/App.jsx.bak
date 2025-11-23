@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
@@ -25,13 +25,13 @@ const Nav = styled.nav`
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 15px;
+  margin-bottom: 20px;
 `;
 
 const NavLink = styled(Link)`
   color: white;
   text-decoration: none;
-  padding: 8px 16px;
+  padding: 10px 15px;
   border-radius: 4px;
   transition: background-color 0.3s;
   &:hover {
@@ -49,23 +49,28 @@ const MainContent = styled.main`
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  min-height: 60vh;
 `;
 
 const ErrorMessage = styled.div`
   color: #721c24;
   background-color: #f8d7da;
   border: 1px solid #f5c6cb;
-  padding: 10px 15px;
+  padding: 10px;
   margin-bottom: 20px;
   border-radius: 4px;
+`;
+
+const LoadingMessage = styled.div`
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+  color: #666;
 `;
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   // Load tasks when component mounts
   useEffect(() => {
@@ -109,14 +114,13 @@ function App() {
       const newTask = await response.json();
       setTasks(prevTasks => [newTask, ...prevTasks]);
       setError(null);
-      navigate('/'); // Redirect to home after adding task
     } catch (err) {
       setError(err.message);
-      console.error('Error:', err);
+      console.error('Ошибка:', err);
     }
   };
 
-  // Function to update a task
+  // Функция для обновления задачи
   const updateTask = async (id, updates) => {
     try {
       const response = await fetch(`/api/tasks/${id}`, {
@@ -128,7 +132,7 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update task');
+        throw new Error('Ошибка обновления задачи');
       }
 
       const updatedTask = await response.json();
@@ -140,11 +144,11 @@ function App() {
       setError(null);
     } catch (err) {
       setError(err.message);
-      console.error('Error:', err);
+      console.error('Ошибка:', err);
     }
   };
 
-  // Function to delete a task
+  // Функция для удаления задачи
   const deleteTask = async (id) => {
     try {
       const response = await fetch(`/api/tasks/${id}`, {
@@ -152,36 +156,38 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete task');
+        throw new Error('Ошибка удаления задачи');
       }
 
       setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
       setError(null);
     } catch (err) {
       setError(err.message);
-      console.error('Error:', err);
+      console.error('Ошибка:', err);
     }
   };
 
   return (
-    <AppContainer>
-      <Header>
-        <h1 style={{ textAlign: 'center', margin: '0 0 10px 0' }}>Менеджер задач</h1>
-        <p style={{ textAlign: 'center', margin: 0, opacity: 0.9 }}>Управляйте своими задачами эффективно</p>
-        
-        <Nav>
-          <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>
-            Список задач
-          </NavLink>
-          <NavLink to="/add" className={({ isActive }) => isActive ? 'active' : ''}>
-            Добавить задачу
-          </NavLink>
-        </Nav>
-      </Header>
+    <Router>
+      <AppContainer>
+        <Header>
+          <h1 style={{ textAlign: 'center', margin: '0 0 10px 0' }}>Менеджер задач</h1>
+          <p style={{ textAlign: 'center', margin: 0, opacity: 0.9 }}>Управляйте своими задачами эффективно</p>
+          
+          <Nav>
+            <NavLink to="/" end className={({ isActive }) => isActive ? 'active' : ''}>
+              Список задач
+            </NavLink>
+            <NavLink to="/add" className={({ isActive }) => isActive ? 'active' : ''}>
+              Добавить задачу
+            </NavLink>
+          </Nav>
+        </Header>
 
-      <MainContent>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        
+        <MainContent>
+          {error && (
+            <ErrorMessage>
+
         <Routes>
           <Route 
             path="/" 
@@ -199,7 +205,11 @@ function App() {
             path="/add" 
             element={
               <TaskForm 
-                onAddTask={addTask}
+                onAddTask={async (taskData) => {
+                  await addTask(taskData);
+                  // After adding a task, redirect to the task list
+                  window.location.href = '/';
+                }} 
               />
             } 
           />
@@ -216,6 +226,24 @@ function App() {
         </Routes>
       </MainContent>
     </AppContainer>
+                  }} 
+                />
+              } 
+            />
+            <Route 
+              path="*" 
+              element={
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <h2>Страница не найдена</h2>
+                  <p>Извините, запрашиваемая страница не существует.</p>
+                  <Link to="/" style={{ color: '#61dafb' }}>Вернуться на главную</Link>
+                </div>
+              } 
+            />
+          </Routes>
+        </MainContent>
+      </AppContainer>
+    </Router>
   );
 }
 
