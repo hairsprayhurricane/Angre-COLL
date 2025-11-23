@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
+import { TaskProvider, useTasks } from './context/TaskContext';
 
 // Styled Components
 const AppContainer = styled.div`
@@ -61,107 +62,9 @@ const ErrorMessage = styled.div`
   border-radius: 4px;
 `;
 
-function App() {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const AppContent = () => {
+  const { error } = useTasks();
   const navigate = useNavigate();
-
-  // Load tasks when component mounts
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  // Function to fetch all tasks
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/tasks');
-      if (!response.ok) {
-        throw new Error('Failed to load tasks');
-      }
-      const data = await response.json();
-      setTasks(data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Function to add a new task
-  const addTask = async (taskData) => {
-    try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(taskData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create task');
-      }
-
-      const newTask = await response.json();
-      setTasks(prevTasks => [newTask, ...prevTasks]);
-      setError(null);
-      navigate('/'); // Redirect to home after adding task
-    } catch (err) {
-      setError(err.message);
-      console.error('Error:', err);
-    }
-  };
-
-  // Function to update a task
-  const updateTask = async (id, updates) => {
-    try {
-      const response = await fetch(`/api/tasks/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update task');
-      }
-
-      const updatedTask = await response.json();
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === id ? updatedTask : task
-        )
-      );
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error:', err);
-    }
-  };
-
-  // Function to delete a task
-  const deleteTask = async (id) => {
-    try {
-      const response = await fetch(`/api/tasks/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete task');
-      }
-
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error:', err);
-    }
-  };
 
   return (
     <AppContainer>
@@ -183,26 +86,8 @@ function App() {
         {error && <ErrorMessage>{error}</ErrorMessage>}
         
         <Routes>
-          <Route 
-            path="/" 
-            element={
-              <TaskList 
-                tasks={tasks}
-                loading={loading}
-                onUpdateTask={updateTask}
-                onDeleteTask={deleteTask}
-                onRefresh={fetchTasks}
-              />
-            } 
-          />
-          <Route 
-            path="/add" 
-            element={
-              <TaskForm 
-                onAddTask={addTask}
-              />
-            } 
-          />
+          <Route path="/" element={<TaskList />} />
+          <Route path="/add" element={<TaskForm />} />
           <Route 
             path="*" 
             element={
@@ -217,6 +102,12 @@ function App() {
       </MainContent>
     </AppContainer>
   );
-}
+};
+
+const App = () => (
+  <TaskProvider>
+    <AppContent />
+  </TaskProvider>
+);
 
 export default App;

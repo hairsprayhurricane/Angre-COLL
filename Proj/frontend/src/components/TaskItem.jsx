@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { useTasks } from '../context/TaskContext';
 
 // Styled Components
 const TaskItemContainer = styled.div`
@@ -132,21 +134,21 @@ const EditTextarea = styled.textarea`
   resize: vertical;
 `;
 
-const TaskItem = ({ task, onUpdateTask, onDeleteTask }) => {
+const TaskItem = ({ task }) => {
+  const { updateTask, deleteTask } = useTasks();
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(task.title);
-  const [editDescription, setEditDescription] = useState(task.description || '');
+  const [editTitle, setEditTitle] = useState(task?.title || '');
+  const [editDescription, setEditDescription] = useState(task?.description || '');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleStatusChange = async (newStatus) => {
-    setIsUpdating(true);
-    try {
-      await onUpdateTask(task.id, { status: newStatus });
-    } catch (error) {
-      console.error('Ошибка при обновлении статуса:', error);
-    } finally {
-      setIsUpdating(false);
-    }
+  const handleStatusToggle = async () => {
+    const updates = { 
+      status: task.status === 'Completed' ? 'In Process' : 'Completed',
+      completedAt: task.status === 'In Process' ? new Date().toISOString() : null
+    };
+    
+    await updateTask(task.id, updates);
+    setIsEditing(false);
   };
 
   const handleEdit = () => {
@@ -161,7 +163,7 @@ const TaskItem = ({ task, onUpdateTask, onDeleteTask }) => {
 
     setIsUpdating(true);
     try {
-      await onUpdateTask(task.id, {
+      await updateTask(task.id, {
         title: editTitle.trim(),
         description: editDescription.trim()
       });
@@ -179,13 +181,9 @@ const TaskItem = ({ task, onUpdateTask, onDeleteTask }) => {
     setIsEditing(false);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (window.confirm('Вы уверены, что хотите удалить эту задачу?')) {
-      try {
-        await onDeleteTask(task.id);
-      } catch (error) {
-        console.error('Ошибка при удалении задачи:', error);
-      }
+      deleteTask(task.id);
     }
   };
 
@@ -251,7 +249,13 @@ const TaskItem = ({ task, onUpdateTask, onDeleteTask }) => {
             <span>
               <select
                 value={task.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
+                onChange={(e) => {
+                  const updates = { 
+                    status: e.target.value,
+                    completedAt: e.target.value === 'Completed' ? new Date().toISOString() : null
+                  };
+                  updateTask(task.id, updates);
+                }}
                 disabled={isUpdating}
                 style={{
                   padding: '2px 5px',

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import TaskItem from './TaskItem';
+import { useTasks } from '../context/TaskContext';
 
 // Styled Components
 const TaskListContainer = styled.div`
@@ -73,6 +74,12 @@ const LoadingContainer = styled.div`
   padding: 40px 0;
 `;
 
+const LoadingMessage = styled.p`
+  margin-top: 15px;
+  color: #6c757d;
+  font-size: 1rem;
+`;
+
 const Spinner = styled.div`
   width: 40px;
   height: 40px;
@@ -101,13 +108,36 @@ const EmptyIcon = styled.div`
   margin-bottom: 15px;
 `;
 
-const TaskList = ({ tasks, loading, onUpdateTask, onDeleteTask, onRefresh }) => {
+const RefreshButton = styled.button`
+  background-color: #28a745;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #218838;
+    color: white;
+  }
+`;
+
+const TaskListItems = styled.div`
+  display: grid;
+  gap: 15px;
+  margin-top: 20px;
+`;
+
+const TaskList = () => {
+  const { tasks, loading, error, fetchTasks } = useTasks();
+
   if (loading) {
     return (
       <TaskListContainer>
         <LoadingContainer>
           <Spinner />
-          <p>Загрузка задач...</p>
+          <LoadingMessage>Загрузка задач...</LoadingMessage>
         </LoadingContainer>
       </TaskListContainer>
     );
@@ -116,6 +146,7 @@ const TaskList = ({ tasks, loading, onUpdateTask, onDeleteTask, onRefresh }) => 
   if (tasks.length === 0) {
     return (
       <TaskListContainer>
+        <RefreshButton onClick={fetchTasks}>Обновить</RefreshButton>
         <AddTaskButton to="/add">
           <span>+</span> Добавить задачу
         </AddTaskButton>
@@ -161,23 +192,11 @@ const TaskList = ({ tasks, loading, onUpdateTask, onDeleteTask, onRefresh }) => 
       
       <TaskListItems>
         {tasks.map(task => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            onUpdateTask={onUpdateTask}
-            onDeleteTask={onDeleteTask}
-          />
+          <TaskItem key={task.id} task={task} />
         ))}
       </TaskListItems>
     </TaskListContainer>
   );
 };
-
-// TaskListItems styled component
-const TaskListItems = styled.div`
-  display: grid;
-  gap: 15px;
-  margin-top: 20px;
-`;
 
 export default TaskList;
